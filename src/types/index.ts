@@ -15,6 +15,7 @@ export interface Game {
   thumbnail: string;
   route: string;
   comingSoon?: boolean;
+  isNew?: boolean;
 }
 
 export interface GameSession {

@@ -1,3 +1,5 @@
+import { Gamepad2 } from "lucide-react";
+
 export default function Footer() {
   return (
     <footer className="glass-strong mt-20 border-t border-border">
@@ -7,9 +9,12 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-xl font-bold">🎮</span>
+                <Gamepad2 className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-bold gradient-text">GameHub</span>
+              <span className="text-lg font-bold">
+                <span className="gradient-text">Game</span>
+                <span style={{ color: "#f0a000" }}>Hub</span>
+              </span>
             </div>
             <p className="text-sm text-muted-foreground">
               Your ultimate gaming platform for classic and modern games.

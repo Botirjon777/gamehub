@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Gamepad2, Puzzle, Swords, Joystick, Pickaxe } from "lucide-react";
 import { Game } from "@/types";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -11,8 +12,13 @@ interface GameCardProps {
 export default function GameCard({ game }: GameCardProps) {
   return (
     <Card hover className="overflow-hidden">
-      <div className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg mb-4 flex items-center justify-center">
-        <span className="text-6xl">{getCategoryIcon(game.category)}</span>
+      <div className="relative h-48 bg-linear-to-br from-primary/20 to-secondary/20 rounded-lg mb-4 flex items-center justify-center">
+        {getCategoryIcon(game.category)}
+        {game.isNew && (
+          <div className="absolute top-2 left-2 gradient-primary px-3 py-1 rounded-full text-xs font-bold text-white animate-pulse">
+            NEW
+          </div>
+        )}
         {game.comingSoon && (
           <div className="absolute top-2 right-2 glass-strong px-3 py-1 rounded-full text-xs font-semibold">
             Coming Soon
@@ -49,12 +55,13 @@ export default function GameCard({ game }: GameCardProps) {
   );
 }
 
-function getCategoryIcon(category: string): string {
-  const icons: Record<string, string> = {
-    puzzle: "🧩",
-    strategy: "♟️",
-    arcade: "🕹️",
-    mining: "⛏️",
+function getCategoryIcon(category: string): React.ReactElement {
+  const iconClass = "w-16 h-16 text-primary";
+  const icons: Record<string, React.ReactElement> = {
+    puzzle: <Puzzle className={iconClass} />,
+    strategy: <Swords className={iconClass} />,
+    arcade: <Joystick className={iconClass} />,
+    mining: <Pickaxe className={iconClass} />,
   };
-  return icons[category] || "🎮";
+  return icons[category] || <Gamepad2 className={iconClass} />;
 }

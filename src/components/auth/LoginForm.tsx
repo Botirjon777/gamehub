@@ -8,9 +8,7 @@ import Button from "@/components/ui/Button";
 
 export default function LoginForm() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { login, isLoading, error, clearError } = useAuthStore();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -18,22 +16,12 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    clearError();
 
-    try {
-      const success = await login(formData.email, formData.password);
+    const success = await login(formData.email, formData.password);
 
-      if (success) {
-        router.push("/dashboard");
-        router.refresh();
-      } else {
-        setError("Invalid email or password");
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (success) {
+      router.push("/dashboard");
     }
   };
 

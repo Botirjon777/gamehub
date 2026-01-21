@@ -19,7 +19,8 @@ export const gamesData: Game[] = [
     category: "puzzle",
     thumbnail: "/games/tetris.jpg",
     route: "/games/tetris",
-    comingSoon: true,
+    comingSoon: false,
+    isNew: true,
   },
   {
     id: "chess",

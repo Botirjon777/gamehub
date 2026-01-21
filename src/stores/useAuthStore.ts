@@ -1,78 +1,115 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatar?: string;
-  createdAt: string;
-}
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  getCurrentUser,
+  type User,
+} from "@/lib/auth.actions";
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (
     email: string,
     username: string,
     password: string,
   ) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  initialize: () => Promise<void>;
+  clearError: () => void;
 }
-
-// Mock user database (in-memory)
-const users: Array<User & { password: string }> = [];
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
+      isLoading: false,
+      error: null,
+
+      initialize: async () => {
+        try {
+          const user = await getCurrentUser();
+          if (user) {
+            set({ user, isAuthenticated: true });
+          }
+        } catch (error) {
+          console.error("Failed to initialize auth:", error);
+        }
+      },
 
       login: async (email: string, password: string) => {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        set({ isLoading: true, error: null });
 
-        const user = users.find(
-          (u) => u.email === email && u.password === password,
-        );
+        try {
+          const result = await loginUser(email, password);
 
-        if (user) {
-          const { password: _, ...userWithoutPassword } = user;
-          set({ user: userWithoutPassword, isAuthenticated: true });
-          return true;
+          if (result.success && result.user) {
+            set({
+              user: result.user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+            return true;
+          } else {
+            set({
+              error: result.error || "Login failed",
+              isLoading: false,
+            });
+            return false;
+          }
+        } catch (error) {
+          set({
+            error: "An unexpected error occurred",
+            isLoading: false,
+          });
+          return false;
         }
-
-        return false;
       },
 
       register: async (email: string, username: string, password: string) => {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        set({ isLoading: true, error: null });
 
-        // Check if user already exists
-        if (users.find((u) => u.email === email || u.username === username)) {
+        try {
+          const result = await registerUser(email, username, password);
+
+          if (result.success && result.user) {
+            set({
+              user: result.user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+            return true;
+          } else {
+            set({
+              error: result.error || "Registration failed",
+              isLoading: false,
+            });
+            return false;
+          }
+        } catch (error) {
+          set({
+            error: "An unexpected error occurred",
+            isLoading: false,
+          });
           return false;
         }
-
-        const newUser: User & { password: string } = {
-          id: Math.random().toString(36).substring(7),
-          email,
-          username,
-          password,
-          createdAt: new Date().toISOString(),
-        };
-
-        users.push(newUser);
-
-        const { password: _, ...userWithoutPassword } = newUser;
-        set({ user: userWithoutPassword, isAuthenticated: true });
-        return true;
       },
 
-      logout: () => {
-        set({ user: null, isAuthenticated: false });
+      logout: async () => {
+        await logoutUser();
+        set({ user: null, isAuthenticated: false, error: null });
+      },
+
+      clearError: () => {
+        set({ error: null });
       },
     }),
     {

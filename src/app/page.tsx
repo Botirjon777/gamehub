@@ -37,7 +37,8 @@ export default function Home() {
         <Container className="py-20 md:py-32 relative">
           <div className="text-center max-w-4xl mx-auto animate-fade-in">
             <h1 className="mb-5 animate-slide-up">
-              Welcome to <span className="gradient-text">GameHub</span>
+              Welcome to <span className="gradient-text">Game</span>
+              <span style={{ color: "#f0a000" }}>Hub</span>
             </h1>
             <p
               className="text-xl md:text-2xl text-muted-foreground mb-8 animate-slide-up"
@@ -72,7 +73,10 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-20">
         <Container>
-          <h2 className="text-center mb-12">Why Choose GameHub?</h2>
+          <h2 className="text-center mb-12">
+            Why Choose <span className="gradient-text">Game</span>
+            <span style={{ color: "#f0a000" }}>Hub</span>?
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;

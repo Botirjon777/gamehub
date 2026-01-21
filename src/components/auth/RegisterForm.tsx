@@ -8,9 +8,8 @@ import Button from "@/components/ui/Button";
 
 export default function RegisterForm() {
   const router = useRouter();
-  const register = useAuthStore((state) => state.register);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { register, isLoading, error, clearError } = useAuthStore();
+  const [localError, setLocalError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     username: "",
@@ -20,40 +19,35 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    clearError();
+    setLocalError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setLocalError("Passwords do not match");
       return;
     }
 
-    setIsLoading(true);
+    if (formData.password.length < 6) {
+      setLocalError("Password must be at least 6 characters");
+      return;
+    }
 
-    try {
-      const success = await register(
-        formData.email,
-        formData.username,
-        formData.password,
-      );
+    const success = await register(
+      formData.email,
+      formData.username,
+      formData.password,
+    );
 
-      if (success) {
-        router.push("/dashboard");
-        router.refresh();
-      } else {
-        setError("Email or username already exists");
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (success) {
+      router.push("/dashboard");
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
+      {(error || localError) && (
         <div className="glass-strong border border-red-500 text-red-400 p-4 rounded-lg text-sm animate-slide-up">
-          {error}
+          {error || localError}
         </div>
       )}
 
