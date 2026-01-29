@@ -25,7 +25,12 @@ export async function POST(req: NextRequest) {
     if (!user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!user.purchasedGames.includes("mining")) {
+    // Check ownership (support both new and legacy IDs)
+    const isOwned =
+      user.purchasedGames.includes("mining-adventure") ||
+      user.purchasedGames.includes("mining");
+
+    if (!isOwned) {
       return NextResponse.json(
         { error: "You must own the game to save progress" },
         { status: 403 },
@@ -43,6 +48,7 @@ export async function POST(req: NextRequest) {
             balance: Number(body.balance),
             ownedDinosaurs: body.ownedDinosaurs,
             lastUpdate: Number(body.lastUpdate),
+            lastBoostTime: body.lastBoostTime || null,
           },
         },
         { upsert: true, new: true, runValidators: true },

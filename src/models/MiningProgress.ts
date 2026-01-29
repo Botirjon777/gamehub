@@ -8,7 +8,10 @@ export interface IMiningProgress extends Document {
     type: string;
     purchasedAt: number;
   }[];
+  ownedSkins: string[];
+  selectedSkinId: string | null;
   lastUpdate: number;
+  lastBoostTime: number | null;
 }
 
 const OwnedDinosaurSchema = new Schema({
@@ -27,7 +30,10 @@ const MiningProgressSchema = new Schema<IMiningProgress>(
     },
     balance: { type: Number, default: 100 },
     ownedDinosaurs: [OwnedDinosaurSchema],
+    ownedSkins: { type: [String], default: ["default"] },
+    selectedSkinId: { type: String, default: "default" },
     lastUpdate: { type: Number, default: Date.now },
+    lastBoostTime: { type: Number, default: null },
   },
   { timestamps: true },
 );

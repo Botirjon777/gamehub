@@ -47,7 +47,7 @@ export const gamesData: Game[] = [
     comingSoon: true,
   },
   {
-    id: "mining",
+    id: "mining-adventure",
     title: "Mining Adventure",
     description: "Dig deep, collect resources, and build your mining empire!",
     category: "mining",
@@ -76,3 +76,10 @@ export function getGameById(id: string): Game | undefined {
 export function getGamesByCategory(category: string): Game[] {
   return gamesData.filter((game) => game.category === category);
 }
+
+export const GAMES = gamesData;
+
+// Mapping of old IDs to new IDs for backwards compatibility
+export const LEGACY_GAME_IDS: Record<string, string> = {
+  mining: "mining-adventure",
+};
