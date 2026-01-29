@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Gamepad2, Joystick, Puzzle, Swords, Pickaxe } from "lucide-react";
 import GameCard from "@/components/games/GameCard";
 import { gamesData } from "@/lib/games-data";
 
@@ -8,11 +9,11 @@ export default function GamesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const categories = [
-    { id: "all", label: "All Games", icon: "🎮" },
-    { id: "arcade", label: "Arcade", icon: "🕹️" },
-    { id: "puzzle", label: "Puzzle", icon: "🧩" },
-    { id: "strategy", label: "Strategy", icon: "♟️" },
-    { id: "mining", label: "Mining", icon: "⛏️" },
+    { id: "all", label: "All Games", Icon: Gamepad2 },
+    { id: "arcade", label: "Arcade", Icon: Joystick },
+    { id: "puzzle", label: "Puzzle", Icon: Puzzle },
+    { id: "strategy", label: "Strategy", Icon: Swords },
+    { id: "mining", label: "Mining", Icon: Pickaxe },
   ];
 
   const filteredGames =
@@ -46,7 +47,7 @@ export default function GamesPage() {
                 : ""
             }`}
           >
-            <span className="mr-2">{category.icon}</span>
+            <category.Icon className="w-5 h-5 mr-2 inline" />
             {category.label}
           </button>
         ))}

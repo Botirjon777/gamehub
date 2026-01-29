@@ -1,22 +1,73 @@
 import Link from "next/link";
-import Image from "next/image";
+import {
+  Gamepad2,
+  Puzzle,
+  Swords,
+  Joystick,
+  Pickaxe,
+  Lock,
+} from "lucide-react";
 import { Game } from "@/types";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { purchaseGame } from "@/lib/purchase.actions";
+import { useState } from "react";
 
 interface GameCardProps {
   game: Game;
 }
 
 export default function GameCard({ game }: GameCardProps) {
+  const { user, setUser } = useAuthStore();
+  const [isPurchasing, setIsPurchasing] = useState(false);
+
+  const isOwned = user?.purchasedGames.includes(game.id) || game.price === 0;
+  const canPlay = isOwned && !game.comingSoon;
+
+  const handlePurchase = async () => {
+    if (!user) return;
+    setIsPurchasing(true);
+    const result = await purchaseGame(game.id);
+    if (result.success && result.user) {
+      setUser(result.user); // Instantly update frontend state
+    } else if (!result.success) {
+      alert(result.error);
+    }
+    setIsPurchasing(false);
+  };
+
   return (
-    <Card hover className="overflow-hidden">
-      <div className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg mb-4 flex items-center justify-center">
-        <span className="text-6xl">{getCategoryIcon(game.category)}</span>
-        {game.comingSoon && (
-          <div className="absolute top-2 right-2 glass-strong px-3 py-1 rounded-full text-xs font-semibold">
-            Coming Soon
+    <Card hover className="overflow-hidden group">
+      <div className="relative h-48 bg-linear-to-br from-primary/20 to-secondary/20 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+        {getCategoryIcon(game.category)}
+
+        {!isOwned && !game.comingSoon && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Lock className="w-12 h-12 text-white/50" />
           </div>
+        )}
+
+        {game.isNew && (
+          <Badge variant="primary" pulse className="absolute top-2 left-2">
+            NEW
+          </Badge>
+        )}
+
+        {game.comingSoon && (
+          <Badge variant="glass-strong" className="absolute top-2 right-2">
+            Coming Soon
+          </Badge>
+        )}
+
+        {!isOwned && !game.comingSoon && (
+          <Badge
+            variant="secondary"
+            className="absolute top-2 right-2 font-black"
+          >
+            ${game.price}
+          </Badge>
         )}
       </div>
 
@@ -29,19 +80,29 @@ export default function GameCard({ game }: GameCardProps) {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs glass px-3 py-1 rounded-full capitalize">
+          <Badge variant="glass" className="capitalize">
             {game.category}
-          </span>
+          </Badge>
+
           {game.comingSoon ? (
             <Button variant="ghost" size="sm" disabled>
               Coming Soon
             </Button>
-          ) : (
+          ) : isOwned ? (
             <Link href={game.route}>
               <Button variant="primary" size="sm">
                 Play Now
               </Button>
             </Link>
+          ) : (
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={handlePurchase}
+              isLoading={isPurchasing}
+            >
+              Buy for ${game.price}
+            </Button>
           )}
         </div>
       </div>
@@ -49,12 +110,13 @@ export default function GameCard({ game }: GameCardProps) {
   );
 }
 
-function getCategoryIcon(category: string): string {
-  const icons: Record<string, string> = {
-    puzzle: "🧩",
-    strategy: "♟️",
-    arcade: "🕹️",
-    mining: "⛏️",
+function getCategoryIcon(category: string): React.ReactElement {
+  const iconClass = "w-16 h-16 text-primary";
+  const icons: Record<string, React.ReactElement> = {
+    puzzle: <Puzzle className={iconClass} />,
+    strategy: <Swords className={iconClass} />,
+    arcade: <Joystick className={iconClass} />,
+    mining: <Pickaxe className={iconClass} />,
   };
-  return icons[category] || "🎮";
+  return icons[category] || <Gamepad2 className={iconClass} />;
 }

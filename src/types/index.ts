@@ -3,6 +3,8 @@ export interface User {
   email: string;
   username: string;
   avatar?: string | null;
+  balance: number;
+  purchasedGames: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,7 +16,9 @@ export interface Game {
   category: "puzzle" | "strategy" | "arcade" | "mining";
   thumbnail: string;
   route: string;
+  price: number;
   comingSoon?: boolean;
+  isNew?: boolean;
 }
 
 export interface GameSession {
