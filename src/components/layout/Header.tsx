@@ -57,18 +57,38 @@ export default function Header() {
           {/* Auth Buttons */}
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground hidden md:block">
-                  {user?.username}
-                </span>
+              <div className="flex items-center space-x-6">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 group px-3 py-1.5 rounded-full hover:bg-white/5 transition-all"
+                >
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/10 group-hover:border-primary/50 transition-colors">
+                    {user?.profileImage ? (
+                      <Image
+                        src={user.profileImage}
+                        alt={user.username}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full gradient-primary flex items-center justify-center text-xs font-bold">
+                        {user?.username.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-white/80 group-hover:text-primary transition-colors hidden md:block">
+                    {user?.username}
+                  </span>
+                </Link>
+
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={logout}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-white/40 hover:text-white"
                 >
                   <LogOut className="w-4 h-4" />
-                  Sign Out
+                  <span className="hidden lg:inline">Sign Out</span>
                 </Button>
               </div>
             ) : (

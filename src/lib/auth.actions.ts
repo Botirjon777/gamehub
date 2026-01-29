@@ -11,6 +11,8 @@ export interface UserDTO {
   username: string;
   balance: number;
   purchasedGames: string[];
+  profileImage: string;
+  phoneNumber: string;
   createdAt: string;
 }
 
@@ -22,6 +24,8 @@ export async function convertToDTO(user: IUser): Promise<UserDTO> {
     username: user.username,
     balance: user.balance,
     purchasedGames: user.purchasedGames,
+    profileImage: user.profileImage || "",
+    phoneNumber: user.phoneNumber || "",
     createdAt: user.createdAt.toISOString(),
   };
 }

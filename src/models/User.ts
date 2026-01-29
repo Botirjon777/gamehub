@@ -6,6 +6,8 @@ export interface IUser extends Document {
   passwordHash: string;
   balance: number;
   purchasedGames: string[]; // Array of game IDs
+  profileImage?: string;
+  phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,9 +19,15 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     balance: { type: Number, default: 1000 }, // Starting credits
     purchasedGames: { type: [String], default: ["snake", "tetris"] }, // Default free games
+    profileImage: { type: String, default: "" },
+    phoneNumber: { type: String, default: "" },
   },
   { timestamps: true },
 );
 
-export default mongoose.models.User ||
-  mongoose.model<IUser>("User", UserSchema);
+if (process.env.NODE_ENV === "development") {
+  delete (mongoose.models as any).User;
+}
+
+const User = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+export default User;
