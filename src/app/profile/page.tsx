@@ -1,14 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import { useAuthStore } from "@/stores/useAuthStore";
 import { updateProfile, topUpBalance } from "@/lib/profile.actions";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
 import { User, Wallet, Camera, Save, Plus, ChevronLeft } from "lucide-react";
-import Link from "next/link";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -138,7 +138,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#0f111a] text-white py-12 px-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1400px] mx-auto">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-8 group"
@@ -296,12 +296,12 @@ export default function ProfilePage() {
                         placeholder="500"
                       />
                       <Button
-                        variant="accent"
+                        variant="primary"
                         onClick={handleTopUp}
                         isLoading={isToppingUp}
-                        className="flex items-center justify-center gap-2 px-8 h-[60px] sm:h-auto"
+                        className="flex items-center justify-center gap-1 px-2 h-[30px] sm:h-auto"
                       >
-                        <Plus size={20} />
+                        <Plus size={24} />
                         <span className="font-bold">Top Up</span>
                       </Button>
                     </div>
@@ -351,7 +351,7 @@ export default function ProfilePage() {
                     Member Since
                   </p>
                   <p className="font-bold text-white/90">
-                    {new Date(user.createdAt).toLocaleDateString(undefined, {
+                    {new Date(user.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",

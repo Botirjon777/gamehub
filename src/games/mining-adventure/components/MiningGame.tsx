@@ -18,7 +18,13 @@ const MiningGame: React.FC = () => {
     syncToServer,
     loadFromServer,
     isLoading,
+    boostEndTime,
+    lastBoostTime,
+    activateBoost,
   } = useMiningStore();
+
+  const [timeLeft, setTimeLeft] = React.useState(0);
+  const [cooldownLeft, setCooldownLeft] = React.useState(0);
 
   // Load from server on mount
   useEffect(() => {
@@ -28,6 +34,41 @@ const MiningGame: React.FC = () => {
     };
     init();
   }, [loadFromServer, collectIncome]);
+
+  // Combined Boost & Cooldown timer
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = Date.now();
+
+      // Boost remaining time
+      if (boostEndTime) {
+        const remaining = Math.max(0, Math.ceil((boostEndTime - now) / 1000));
+        setTimeLeft(remaining);
+      } else {
+        setTimeLeft(0);
+      }
+
+      // Cooldown remaining time (12 hours)
+      if (lastBoostTime) {
+        const COOLDOWN = 12 * 60 * 60 * 1000;
+        const remainingMs = Math.max(0, lastBoostTime + COOLDOWN - now);
+        setCooldownLeft(Math.ceil(remainingMs / 1000));
+      } else {
+        setCooldownLeft(0);
+      }
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
+    return () => clearInterval(timer);
+  }, [boostEndTime, lastBoostTime]);
+
+  const formatCooldown = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours}h ${minutes}m ${secs}s`;
+  };
 
   // Sync income every 5 seconds and push to server every 15 seconds
   useEffect(() => {
@@ -46,6 +87,7 @@ const MiningGame: React.FC = () => {
   }, [collectIncome, syncToServer]);
 
   const incomePerMinute = getIncomePerMinute();
+  const isBoostActive = timeLeft > 0;
 
   if (isLoading) {
     return (
@@ -61,7 +103,7 @@ const MiningGame: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
         <div className="glass p-6 rounded-2xl border border-white/10 flex items-center gap-6">
           <div className="p-4 bg-yellow-500/10 rounded-xl">
             <Wallet className="w-8 h-8 text-yellow-500" />
@@ -84,8 +126,11 @@ const MiningGame: React.FC = () => {
             <p className="text-white/40 text-sm font-medium uppercase tracking-wider">
               Income
             </p>
-            <p className="text-3xl font-black text-green-400">
-              +${incomePerMinute.toLocaleString()}/min
+            <p
+              className={`text-3xl font-black ${isBoostActive ? "text-primary animate-pulse" : "text-green-400"}`}
+            >
+              +${(incomePerMinute * (isBoostActive ? 5 : 1)).toLocaleString()}
+              /min
             </p>
           </div>
         </div>
@@ -101,6 +146,48 @@ const MiningGame: React.FC = () => {
             <p className="text-3xl font-black text-white">
               {ownedDinosaurs.length}
             </p>
+          </div>
+        </div>
+
+        {/* Boost Section */}
+        <div
+          className={`p-1 rounded-2xl transition-all duration-500 ${isBoostActive ? "gradient-primary shadow-[0_0_30px_rgba(235,54,75,0.3)]" : "bg-white/5"}`}
+        >
+          <div className="bg-[#1a1c2a] h-full w-full rounded-xl p-5 flex flex-col justify-center">
+            {isBoostActive ? (
+              <div className="text-center space-y-1">
+                <p className="text-primary text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
+                  5X BOOST ACTIVE
+                </p>
+                <p className="text-4xl font-black text-white tabular-nums">
+                  0:{timeLeft.toString().padStart(2, "0")}
+                </p>
+              </div>
+            ) : cooldownLeft > 0 ? (
+              <div className="text-center space-y-2 py-1">
+                <div className="flex items-center justify-center gap-2 text-white/20">
+                  <Clock className="w-3 h-3" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">
+                    ON COOLDOWN
+                  </span>
+                </div>
+                <p className="text-lg font-black text-white/40 tabular-nums">
+                  {formatCooldown(cooldownLeft)}
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={activateBoost}
+                className="group w-full h-full flex flex-col items-center justify-center gap-2 hover:scale-105 transition-transform py-1"
+              >
+                <div className="p-2 bg-primary/20 rounded-lg group-hover:bg-primary/40 transition-colors">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-xs font-bold text-white uppercase tracking-widest text-primary">
+                  Boost 5x
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>

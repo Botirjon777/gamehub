@@ -8,6 +8,9 @@ interface MiningState {
   ownedDinosaurs: OwnedDinosaur[];
   lastUpdate: number; // Timestamp of last calculation
   isLoading: boolean;
+  boostEndTime: number | null;
+  lastBoostTime: number | null;
+  activateBoost: () => boolean;
   buyDino: (type: DinosaurType) => boolean;
   collectIncome: () => void;
   getIncomePerMinute: () => number;
@@ -23,6 +26,24 @@ export const useMiningStore = create<MiningState>()(
       ownedDinosaurs: [],
       lastUpdate: Date.now(),
       isLoading: false,
+      boostEndTime: null,
+      lastBoostTime: null,
+
+      activateBoost: () => {
+        const now = Date.now();
+        const { lastBoostTime } = get();
+        const COOLDOWN = 12 * 60 * 60 * 1000; // 12 hours
+
+        if (lastBoostTime && now - lastBoostTime < COOLDOWN) {
+          return false;
+        }
+
+        set({
+          boostEndTime: now + 60000,
+          lastBoostTime: now,
+        });
+        return true;
+      },
 
       getIncomePerMinute: () => {
         const { ownedDinosaurs } = get();
@@ -121,9 +142,15 @@ export const useMiningStore = create<MiningState>()(
 
       collectIncome: () => {
         const now = Date.now();
-        const { lastUpdate, getIncomePerMinute } = get();
+        const { lastUpdate, getIncomePerMinute, boostEndTime } = get();
         const diffMs = now - lastUpdate;
-        const incomePerMs = getIncomePerMinute() / 60000;
+
+        let multiplier = 1;
+        if (boostEndTime && now < boostEndTime) {
+          multiplier = 5;
+        }
+
+        const incomePerMs = (getIncomePerMinute() * multiplier) / 60000;
         const earned = diffMs * incomePerMs;
 
         if (earned > 0) {
