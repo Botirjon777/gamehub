@@ -9,7 +9,9 @@ export const gamesData: Game[] = [
     category: "arcade",
     thumbnail: "/games/snake.jpg",
     route: "/games/snake",
-    comingSoon: true,
+    price: 0,
+    comingSoon: false,
+    isNew: true,
   },
   {
     id: "tetris",
@@ -19,6 +21,7 @@ export const gamesData: Game[] = [
     category: "puzzle",
     thumbnail: "/games/tetris.jpg",
     route: "/games/tetris",
+    price: 0,
     comingSoon: false,
     isNew: true,
   },
@@ -30,6 +33,7 @@ export const gamesData: Game[] = [
     category: "strategy",
     thumbnail: "/games/chess.jpg",
     route: "/games/chess",
+    price: 49.99,
     comingSoon: true,
   },
   {
@@ -39,6 +43,7 @@ export const gamesData: Game[] = [
     category: "strategy",
     thumbnail: "/games/monopoly.jpg",
     route: "/games/monopoly",
+    price: 39.99,
     comingSoon: true,
   },
   {
@@ -47,8 +52,10 @@ export const gamesData: Game[] = [
     description: "Dig deep, collect resources, and build your mining empire!",
     category: "mining",
     thumbnail: "/games/mining.jpg",
-    route: "/games/mining",
-    comingSoon: true,
+    route: "/games/mining-adventure",
+    price: 29.99,
+    comingSoon: false,
+    isNew: true,
   },
   {
     id: "crypto-miner",
@@ -57,6 +64,7 @@ export const gamesData: Game[] = [
     category: "mining",
     thumbnail: "/games/crypto.jpg",
     route: "/games/crypto-miner",
+    price: 19.99,
     comingSoon: true,
   },
 ];

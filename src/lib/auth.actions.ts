@@ -1,41 +1,29 @@
-import bcrypt from "bcryptjs";
+"use server";
 
-export interface User {
+import bcrypt from "bcryptjs";
+import dbConnect from "./mongodb";
+import User, { IUser } from "@/models/User";
+import { cookies } from "next/headers";
+
+export interface UserDTO {
   id: string;
   email: string;
   username: string;
+  balance: number;
+  purchasedGames: string[];
   createdAt: string;
 }
 
-interface StoredUser extends User {
-  passwordHash: string;
-}
-
-// Storage key for users in localStorage
-const USERS_STORAGE_KEY = "gamehub_users";
-const CURRENT_USER_KEY = "gamehub_current_user";
-
-// Helper to get users from storage (server-side safe)
-function getStoredUsers(): StoredUser[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const stored = localStorage.getItem(USERS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save users to storage
-function saveUsers(users: StoredUser[]): void {
-  if (typeof window === "undefined") return;
-
-  try {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  } catch (error) {
-    console.error("Failed to save users:", error);
-  }
+// Helper to convert Mongoose doc to DTO
+export async function convertToDTO(user: IUser): Promise<UserDTO> {
+  return {
+    id: user._id.toString(),
+    email: user.email,
+    username: user.username,
+    balance: user.balance,
+    purchasedGames: user.purchasedGames,
+    createdAt: user.createdAt.toISOString(),
+  };
 }
 
 // Hash password with bcrypt
@@ -57,8 +45,10 @@ export async function registerUser(
   email: string,
   username: string,
   password: string,
-): Promise<{ success: boolean; user?: User; error?: string }> {
+): Promise<{ success: boolean; user?: UserDTO; error?: string }> {
   try {
+    await dbConnect();
+
     // Validate inputs
     if (!email || !username || !password) {
       return { success: false, error: "All fields are required" };
@@ -71,14 +61,14 @@ export async function registerUser(
       };
     }
 
-    const users = getStoredUsers();
-
     // Check if user already exists
-    if (users.find((u) => u.email === email)) {
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
       return { success: false, error: "Email already registered" };
     }
 
-    if (users.find((u) => u.username === username)) {
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
       return { success: false, error: "Username already taken" };
     }
 
@@ -86,30 +76,24 @@ export async function registerUser(
     const passwordHash = await hashPassword(password);
 
     // Create new user
-    const newUser: StoredUser = {
-      id: crypto.randomUUID(),
+    const newUser = await User.create({
       email,
       username,
       passwordHash,
-      createdAt: new Date().toISOString(),
-    };
+    });
 
-    // Save to storage
-    users.push(newUser);
-    saveUsers(users);
+    const userDTO: UserDTO = await convertToDTO(newUser);
 
-    // Return user without password hash
-    const { passwordHash: _, ...userWithoutPassword } = newUser;
+    // Set cookie for session (simplistic version for now)
+    const cookieStore = await cookies();
+    cookieStore.set("currentUser", JSON.stringify(userDTO), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: "/",
+    });
 
-    // Store current user
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        CURRENT_USER_KEY,
-        JSON.stringify(userWithoutPassword),
-      );
-    }
-
-    return { success: true, user: userWithoutPassword };
+    return { success: true, user: userDTO };
   } catch (error) {
     console.error("Registration error:", error);
     return { success: false, error: "Registration failed. Please try again." };
@@ -120,17 +104,17 @@ export async function registerUser(
 export async function loginUser(
   email: string,
   password: string,
-): Promise<{ success: boolean; user?: User; error?: string }> {
+): Promise<{ success: boolean; user?: UserDTO; error?: string }> {
   try {
+    await dbConnect();
+
     // Validate inputs
     if (!email || !password) {
       return { success: false, error: "Email and password are required" };
     }
 
-    const users = getStoredUsers();
-
     // Find user by email
-    const user = users.find((u) => u.email === email);
+    const user = await User.findOne({ email });
 
     if (!user) {
       return { success: false, error: "Invalid email or password" };
@@ -143,18 +127,18 @@ export async function loginUser(
       return { success: false, error: "Invalid email or password" };
     }
 
-    // Return user without password hash
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    const userDTO: UserDTO = await convertToDTO(user);
 
-    // Store current user
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        CURRENT_USER_KEY,
-        JSON.stringify(userWithoutPassword),
-      );
-    }
+    // Set cookie for session
+    const cookieStore = await cookies();
+    cookieStore.set("currentUser", JSON.stringify(userDTO), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
 
-    return { success: true, user: userWithoutPassword };
+    return { success: true, user: userDTO };
   } catch (error) {
     console.error("Login error:", error);
     return { success: false, error: "Login failed. Please try again." };
@@ -163,19 +147,36 @@ export async function loginUser(
 
 // Logout user
 export async function logoutUser(): Promise<void> {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(CURRENT_USER_KEY);
-  }
+  const cookieStore = await cookies();
+  cookieStore.delete("currentUser");
 }
 
-// Get current user
-export async function getCurrentUser(): Promise<User | null> {
-  if (typeof window === "undefined") return null;
+// Get current user (Database Truth)
+export async function getCurrentUser(): Promise<UserDTO | null> {
+  const cookieStore = await cookies();
+  const stored = cookieStore.get("currentUser");
+
+  if (!stored) return null;
 
   try {
-    const stored = localStorage.getItem(CURRENT_USER_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
+    const sessionUser = JSON.parse(stored.value);
+
+    await dbConnect();
+    const user = await User.findById(sessionUser.id);
+
+    if (!user) {
+      cookieStore.delete("currentUser");
+      return null;
+    }
+
+    const userDTO = await convertToDTO(user);
+
+    // Optionally update cookie if it's vastly different (for next immediate read)
+    // but the next read will also hit DB, so it's fine.
+
+    return userDTO;
+  } catch (error) {
+    console.error("GetCurrentUser error:", error);
     return null;
   }
 }

@@ -13,49 +13,67 @@ import Link from "next/link";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated, initialize } = useAuthStore();
+  const { user, isAuthenticated, isInitialized, initialize } = useAuthStore();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isInitialized && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isInitialized, isAuthenticated, router]);
 
-  if (!isAuthenticated || !user) {
-    return null; // or a loading spinner
+  if (!isInitialized || (isAuthenticated && !user)) {
+    return (
+      <div className="min-h-screen bg-[#0f111a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  // Mock stats for now - will be replaced with real data later
+  if (!isAuthenticated || !user) return null;
+
   const stats = {
-    gamesPlayed: 0,
+    balance: user.balance,
+    gamesOwned: user.purchasedGames.length,
     totalScore: 0,
-    achievements: 0,
     rank: "Beginner",
   };
 
-  const recentGames = gamesData.slice(0, 3);
+  const myGames = gamesData.filter((g) => user.purchasedGames.includes(g.id));
+  const featuredGames = gamesData
+    .filter((g) => !user.purchasedGames.includes(g.id))
+    .slice(0, 3);
 
   return (
     <div className="container mx-auto px-4 py-20">
       {/* Welcome Section */}
-      <div className="mb-12 animate-slide-up">
-        <h1 className="mb-2">Welcome back, {user.username}! 👋</h1>
-        <p className="text-xl text-muted-foreground">
-          Ready to continue your gaming adventure?
-        </p>
+      <div className="mb-12 animate-slide-up flex justify-between items-end">
+        <div>
+          <h1 className="mb-2">Welcome back, {user.username}! 👋</h1>
+          <p className="text-xl text-muted-foreground">
+            Ready to continue your gaming adventure?
+          </p>
+        </div>
+        <div className="bg-primary/10 px-6 py-4 rounded-2xl border border-primary/20">
+          <p className="text-sm text-primary font-bold uppercase tracking-wider mb-1">
+            Your Balance
+          </p>
+          <p className="text-3xl font-black text-foreground">
+            ${user.balance.toLocaleString()}
+          </p>
+        </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <StatsCard
           icon={<Gamepad2 className="w-10 h-10 text-primary" />}
-          title="Games Played"
-          value={stats.gamesPlayed}
-          subtitle="Start playing to track stats"
+          title="Games Owned"
+          value={stats.gamesOwned}
+          subtitle="Unlocked in your library"
         />
         <StatsCard
           icon={<Trophy className="w-10 h-10 text-primary" />}
@@ -66,7 +84,7 @@ export default function DashboardPage() {
         <StatsCard
           icon={<Star className="w-10 h-10 text-primary" />}
           title="Achievements"
-          value={stats.achievements}
+          value={0}
           subtitle="Unlock more by playing"
         />
         <StatsCard
@@ -77,59 +95,30 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Quick Actions */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card hover className="text-center p-8">
-            <Gamepad2 className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Browse Games</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Explore our full game library
-            </p>
-            <Link href="/games">
-              <Button variant="primary" size="sm">
-                View All Games
-              </Button>
-            </Link>
-          </Card>
-
-          <Card hover className="text-center p-8">
-            <Trophy className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Leaderboards</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              See how you rank globally
-            </p>
-            <Button variant="ghost" size="sm" disabled>
-              Coming Soon
-            </Button>
-          </Card>
-
-          <Card hover className="text-center p-8">
-            <Star className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Achievements</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Track your progress
-            </p>
-            <Button variant="ghost" size="sm" disabled>
-              Coming Soon
-            </Button>
-          </Card>
+      {/* My Games Section */}
+      {myGames.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">My Library</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {myGames.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Featured Games */}
+      {/* Featured Games / Store */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Featured Games</h2>
+          <h2 className="text-2xl font-bold">Featured in Store</h2>
           <Link href="/games">
             <Button variant="ghost" size="sm">
-              View All →
+              Explore All →
             </Button>
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recentGames.map((game) => (
+          {featuredGames.map((game) => (
             <GameCard key={game.id} game={game} />
           ))}
         </div>

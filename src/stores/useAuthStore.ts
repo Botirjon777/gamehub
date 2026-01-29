@@ -5,13 +5,14 @@ import {
   loginUser,
   logoutUser,
   getCurrentUser,
-  type User,
+  type UserDTO,
 } from "@/lib/auth.actions";
 
 interface AuthState {
-  user: User | null;
+  user: UserDTO | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (
@@ -21,6 +22,8 @@ interface AuthState {
   ) => Promise<boolean>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
+  setUser: (user: UserDTO | null) => void;
+  refreshUser: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -30,16 +33,33 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      isInitialized: false,
       error: null,
+
+      setUser: (user: UserDTO | null) => {
+        set({ user, isAuthenticated: !!user });
+      },
+
+      refreshUser: async () => {
+        try {
+          const user = await getCurrentUser();
+          set({ user, isAuthenticated: !!user });
+        } catch (error) {
+          console.error("Failed to refresh user:", error);
+        }
+      },
 
       initialize: async () => {
         try {
           const user = await getCurrentUser();
           if (user) {
-            set({ user, isAuthenticated: true });
+            set({ user, isAuthenticated: true, isInitialized: true });
+          } else {
+            set({ user: null, isAuthenticated: false, isInitialized: true });
           }
         } catch (error) {
           console.error("Failed to initialize auth:", error);
+          set({ isInitialized: true });
         }
       },
 
