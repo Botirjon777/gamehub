@@ -13,6 +13,8 @@ export interface UserDTO {
   purchasedGames: string[];
   profileImage: string;
   phoneNumber: string;
+  ownedSkins: string[];
+  selectedSkins: Record<string, string>;
   createdAt: string;
 }
 
@@ -26,6 +28,11 @@ export async function convertToDTO(user: IUser): Promise<UserDTO> {
     purchasedGames: user.purchasedGames,
     profileImage: user.profileImage || "",
     phoneNumber: user.phoneNumber || "",
+    ownedSkins: user.ownedSkins || ["default"],
+    selectedSkins:
+      user.selectedSkins instanceof Map
+        ? Object.fromEntries(user.selectedSkins)
+        : user.selectedSkins || {},
     createdAt: user.createdAt.toISOString(),
   };
 }

@@ -18,7 +18,12 @@ export default function Header() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/games", label: "Games" },
-    ...(isAuthenticated ? [{ href: "/dashboard", label: "Dashboard" }] : []),
+    ...(isAuthenticated
+      ? [
+          { href: "/dashboard", label: "Dashboard" },
+          { href: "/skins", label: "Skins" },
+        ]
+      : []),
   ];
 
   return (

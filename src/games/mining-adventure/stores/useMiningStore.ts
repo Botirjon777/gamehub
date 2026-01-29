@@ -10,8 +10,10 @@ interface MiningState {
   isLoading: boolean;
   boostEndTime: number | null;
   lastBoostTime: number | null;
+  globalMultiplier: number; // Set from external user state
   activateBoost: () => boolean;
   buyDino: (type: DinosaurType) => boolean;
+  setGlobalMultiplier: (multiplier: number) => void;
   collectIncome: () => void;
   getIncomePerMinute: () => number;
   syncToServer: () => Promise<void>;
@@ -28,6 +30,7 @@ export const useMiningStore = create<MiningState>()(
       isLoading: false,
       boostEndTime: null,
       lastBoostTime: null,
+      globalMultiplier: 1,
 
       activateBoost: () => {
         const now = Date.now();
@@ -75,12 +78,17 @@ export const useMiningStore = create<MiningState>()(
       },
 
       syncToServer: async () => {
-        const { balance, ownedDinosaurs, lastUpdate } = get();
+        const { balance, ownedDinosaurs, lastUpdate, lastBoostTime } = get();
         try {
           const res = await fetch("/api/mining/progress", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ balance, ownedDinosaurs, lastUpdate }),
+            body: JSON.stringify({
+              balance,
+              ownedDinosaurs,
+              lastUpdate,
+              lastBoostTime,
+            }),
           });
 
           if (!res.ok) {
@@ -119,6 +127,7 @@ export const useMiningStore = create<MiningState>()(
                 balance: data.balance,
                 ownedDinosaurs: data.ownedDinosaurs,
                 lastUpdate: data.lastUpdate,
+                lastBoostTime: data.lastBoostTime,
               });
               // Catch up immediately after loading from DB
               get().collectIncome();
@@ -140,14 +149,22 @@ export const useMiningStore = create<MiningState>()(
         }
       },
 
+      setGlobalMultiplier: (multiplier: number) =>
+        set({ globalMultiplier: multiplier }),
+
       collectIncome: () => {
         const now = Date.now();
-        const { lastUpdate, getIncomePerMinute, boostEndTime } = get();
+        const {
+          lastUpdate,
+          getIncomePerMinute,
+          boostEndTime,
+          globalMultiplier,
+        } = get();
         const diffMs = now - lastUpdate;
 
-        let multiplier = 1;
+        let multiplier = globalMultiplier;
         if (boostEndTime && now < boostEndTime) {
-          multiplier = 5;
+          multiplier *= 5; // Dinosaur Boost stacks with Skin Multiplier!
         }
 
         const incomePerMs = (getIncomePerMinute() * multiplier) / 60000;
@@ -161,8 +178,6 @@ export const useMiningStore = create<MiningState>()(
         } else {
           set({ lastUpdate: now });
         }
-
-        // Auto sync to server occasionally (can be handled in component too)
       },
 
       resetGame: () => {

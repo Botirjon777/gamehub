@@ -4,7 +4,7 @@ import dbConnect from "./mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { getCurrentUser, convertToDTO, type UserDTO } from "./auth.actions";
-import { gamesData } from "./games-data";
+import { gamesData, LEGACY_GAME_IDS } from "./games-data";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
@@ -25,8 +25,15 @@ export async function purchaseGame(gameId: string) {
       return { success: false, error: "User not found" };
     }
 
-    // Check if already owned
-    if (user.purchasedGames.includes(gameId)) {
+    // Check if already owned (including legacy IDs)
+    const alreadyOwned =
+      user.purchasedGames.includes(gameId) ||
+      Object.entries(LEGACY_GAME_IDS).some(
+        ([oldId, newId]) =>
+          newId === gameId && user.purchasedGames.includes(oldId),
+      );
+
+    if (alreadyOwned) {
       return { success: false, error: "You already own this game" };
     }
 

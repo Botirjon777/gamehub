@@ -7,7 +7,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import Card from "@/components/ui/Card";
 import StatsCard from "@/components/dashboard/StatsCard";
 import GameCard from "@/components/games/GameCard";
-import { gamesData } from "@/lib/games-data";
+import { gamesData, LEGACY_GAME_IDS } from "@/lib/games-data";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 
@@ -35,16 +35,25 @@ export default function DashboardPage() {
 
   if (!isAuthenticated || !user) return null;
 
+  const isGameOwned = (gameId: string) => {
+    if (user.purchasedGames.includes(gameId)) return true;
+    return Object.entries(LEGACY_GAME_IDS).some(
+      ([oldId, newId]) =>
+        newId === gameId && user.purchasedGames.includes(oldId),
+    );
+  };
+
   const stats = {
     balance: user.balance,
-    gamesOwned: user.purchasedGames.length,
+    gamesOwned: gamesData.filter((g) => isGameOwned(g.id) || g.price === 0)
+      .length,
     totalScore: 0,
     rank: "Beginner",
   };
 
-  const myGames = gamesData.filter((g) => user.purchasedGames.includes(g.id));
+  const myGames = gamesData.filter((g) => isGameOwned(g.id) || g.price === 0);
   const featuredGames = gamesData
-    .filter((g) => !user.purchasedGames.includes(g.id))
+    .filter((g) => !isGameOwned(g.id) && g.price > 0)
     .slice(0, 3);
 
   return (

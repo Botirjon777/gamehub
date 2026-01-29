@@ -9,6 +9,7 @@ interface DinoCardProps {
   count: number;
   onBuy: () => void;
   canAfford: boolean;
+  selectedSkinId?: string | null;
 }
 
 const DinoCard: React.FC<DinoCardProps> = ({
@@ -16,20 +17,39 @@ const DinoCard: React.FC<DinoCardProps> = ({
   count,
   onBuy,
   canAfford,
+  selectedSkinId = "default",
 }) => {
+  // Apply skin-based color modifications
+  let displayColor = config.color;
+  let glowStyle = {};
+
+  if (selectedSkinId === "mining-neon") {
+    displayColor = "#f0f"; // Magenta glow for neon
+    glowStyle = { boxShadow: `0 0 20px rgba(255, 0, 255, 0.4)` };
+  } else if (selectedSkinId === "mining-gold") {
+    displayColor = "#fbbf24"; // Gold color
+    glowStyle = { boxShadow: `0 0 15px rgba(251, 191, 36, 0.3)` };
+  } else if (selectedSkinId === "mining-void") {
+    displayColor = "#818cf8"; // Deep indigo for void
+    glowStyle = { filter: "brightness(0.7) contrast(1.2)" };
+  }
+
   return (
-    <div className="glass p-6 rounded-2xl border border-white/10 hover:glass-strong transition-all group">
+    <div
+      className={`glass p-6 rounded-2xl border transition-all group ${selectedSkinId !== "mining-classic" ? "border-primary/20" : "border-white/10"}`}
+    >
       <div className="flex items-start justify-between mb-4">
         <div
           className="p-4 rounded-xl shadow-lg transition-transform group-hover:scale-110"
           style={{
-            backgroundColor: `${config.color}20`,
-            border: `1px solid ${config.color}40`,
+            backgroundColor: `${displayColor}20`,
+            border: `1px solid ${displayColor}40`,
+            ...glowStyle,
           }}
         >
           <DinoIcon
             type={config.id}
-            color={config.color}
+            color={displayColor}
             className="w-12 h-12"
           />
         </div>

@@ -52,3 +52,40 @@ export const DINOSAURS: DinosaurConfig[] = [
     color: "#fbbf24", // Amber
   },
 ];
+
+export const SKINS: {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  previewColor: string;
+}[] = [
+  {
+    id: "default",
+    name: "Classic",
+    description: "The original prehistoric look.",
+    cost: 0,
+    previewColor: "linear-gradient(135deg, #4ade80, #60a5fa)",
+  },
+  {
+    id: "neon",
+    name: "Neon Strike",
+    description: "Cyberpunk dinosaurs with glowing edges.",
+    cost: 5000,
+    previewColor: "linear-gradient(135deg, #f472b6, #818cf8)",
+  },
+  {
+    id: "gold",
+    name: "Midas Touch",
+    description: "Everything they mine turns to literal gold.",
+    cost: 50000,
+    previewColor: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+  },
+  {
+    id: "void",
+    name: "Void Dweller",
+    description: "Dark, mysterious, and incredibly efficient.",
+    cost: 250000,
+    previewColor: "linear-gradient(135deg, #1f2937, #111827)",
+  },
+];

@@ -2,12 +2,17 @@
 
 import React, { useEffect } from "react";
 import { useMiningStore } from "../stores/useMiningStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { DINOSAURS } from "../constants";
+import { DinosaurType } from "../types";
 import DinoCard from "./DinoCard";
 import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+import Link from "next/link";
 import { Pickaxe, TrendingUp, Wallet, Clock } from "lucide-react";
 
 const MiningGame: React.FC = () => {
+  const { user, setUser } = useAuthStore();
   const {
     balance,
     ownedDinosaurs,
@@ -21,7 +26,38 @@ const MiningGame: React.FC = () => {
     boostEndTime,
     lastBoostTime,
     activateBoost,
+    setGlobalMultiplier,
   } = useMiningStore();
+
+  const { GLOBAL_SKINS } = require("@/lib/skins-data");
+  const { equipSkin } = require("@/lib/skins.actions");
+
+  const activeSkinId =
+    user?.selectedSkins?.["mining-adventure"] || "mining-classic";
+  const activeSkin = GLOBAL_SKINS.find((s: any) => s.id === activeSkinId);
+  const activeMultiplier = activeSkin?.multiplier || 1;
+
+  const [activeTab, setActiveTab] = React.useState<"dinos" | "skins">("dinos");
+  const [isEquipping, setIsEquipping] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    setGlobalMultiplier(activeMultiplier);
+  }, [activeMultiplier, setGlobalMultiplier]);
+
+  // Filter ONLY owned skins for this game
+  const ownedSkinsForGame = GLOBAL_SKINS.filter(
+    (s: any) =>
+      s.gameId === "mining-adventure" && user?.ownedSkins.includes(s.id),
+  );
+
+  const handleEquip = async (skinId: string) => {
+    setIsEquipping(skinId);
+    const result = await equipSkin("mining-adventure", skinId);
+    if (result.success && result.user) {
+      setUser(result.user);
+    }
+    setIsEquipping(null);
+  };
 
   const [timeLeft, setTimeLeft] = React.useState(0);
   const [cooldownLeft, setCooldownLeft] = React.useState(0);
@@ -132,6 +168,16 @@ const MiningGame: React.FC = () => {
               +${(incomePerMinute * (isBoostActive ? 5 : 1)).toLocaleString()}
               /min
             </p>
+            {activeMultiplier > 1 && (
+              <div className="flex items-center gap-1 mt-1">
+                <Badge
+                  variant="primary"
+                  className="bg-yellow-500 text-black text-[10px] py-0 px-2 border-none font-black"
+                >
+                  {activeMultiplier}x SKIN BONUS
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
 
@@ -192,32 +238,107 @@ const MiningGame: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-8">
-        <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
-          Marketplace
-        </h2>
-        <Badge variant="outline" className="opacity-60">
-          Buy Dinosaurs
-        </Badge>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 mt-12 pt-8 border-t border-white/5">
+        <div className="flex items-center gap-3">
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
+            Marketplace
+          </h2>
+          <Badge variant="outline" className="opacity-60">
+            {activeTab === "dinos" ? "Get Miners" : "My Skins"}
+          </Badge>
+          {activeMultiplier > 1 && (
+            <Badge
+              variant="primary"
+              className="bg-yellow-500 text-black border-none animate-bounce"
+            >
+              {activeMultiplier}x INCOME ACTIVE
+            </Badge>
+          )}
+        </div>
+
+        <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
+          <button
+            onClick={() => setActiveTab("dinos")}
+            className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === "dinos" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white"}`}
+          >
+            Miners
+          </button>
+          <button
+            onClick={() => setActiveTab("skins")}
+            className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === "skins" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white"}`}
+          >
+            Skins
+          </button>
+        </div>
       </div>
 
-      {/* Dinosaur Shop Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {DINOSAURS.map((dino) => {
-          const count = ownedDinosaurs.filter((o) => o.type === dino.id).length;
-          const canAfford = balance >= dino.cost;
+      {activeTab === "dinos" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {DINOSAURS.map((dino) => {
+            const count = ownedDinosaurs.filter(
+              (o) => o.type === dino.id,
+            ).length;
+            const canAfford = balance >= dino.cost;
 
-          return (
-            <DinoCard
-              key={dino.id}
-              config={dino}
-              count={count}
-              onBuy={() => buyDino(dino.id)}
-              canAfford={canAfford}
-            />
-          );
-        })}
-      </div>
+            return (
+              <DinoCard
+                key={dino.id}
+                config={dino}
+                count={count}
+                onBuy={() => buyDino(dino.id)}
+                canAfford={canAfford}
+                selectedSkinId={activeSkinId}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {ownedSkinsForGame.map((skin: any) => {
+            const isSelected = activeSkinId === skin.id;
+
+            return (
+              <div
+                key={skin.id}
+                className={`glass p-6 rounded-2xl border transition-all ${isSelected ? "border-primary shadow-[0_0_20px_rgba(235,54,75,0.2)]" : "border-white/10"}`}
+              >
+                <div
+                  className="w-full h-32 rounded-xl mb-4"
+                  style={{ background: skin.previewColor }}
+                />
+                <h3 className="text-lg font-bold text-white mb-1">
+                  {skin.name}
+                </h3>
+                <p className="text-xs text-white/40 mb-4 h-8">
+                  {skin.description}
+                </p>
+                <Button
+                  variant={isSelected ? "primary" : "ghost"}
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleEquip(skin.id)}
+                  disabled={isSelected || isEquipping === skin.id}
+                  isLoading={isEquipping === skin.id}
+                >
+                  {isSelected ? "Equipped" : "Equip"}
+                </Button>
+              </div>
+            );
+          })}
+          {ownedSkinsForGame.length === 0 && (
+            <div className="col-span-full py-12 text-center glass rounded-2xl border border-dashed border-white/10">
+              <p className="text-white/40 font-bold uppercase tracking-widest text-sm mb-4">
+                No custom skins owned yet
+              </p>
+              <Link href="/skins">
+                <Button variant="primary" size="sm">
+                  Visit Skins Market
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Footer Info */}
       <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-white/30 text-sm font-medium">

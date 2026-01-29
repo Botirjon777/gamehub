@@ -8,6 +8,8 @@ export interface IUser extends Document {
   purchasedGames: string[]; // Array of game IDs
   profileImage?: string;
   phoneNumber?: string;
+  ownedSkins: string[]; // Global owned skins
+  selectedSkins: Record<string, string>; // gameId -> skinId
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +23,8 @@ const UserSchema = new Schema<IUser>(
     purchasedGames: { type: [String], default: ["snake", "tetris"] }, // Default free games
     profileImage: { type: String, default: "" },
     phoneNumber: { type: String, default: "" },
+    ownedSkins: { type: [String], default: ["default"] },
+    selectedSkins: { type: Map, of: String, default: {} },
   },
   { timestamps: true },
 );

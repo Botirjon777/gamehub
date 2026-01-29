@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { updateProfile, topUpBalance } from "@/lib/profile.actions";
+import { gamesData, LEGACY_GAME_IDS } from "@/lib/games-data";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { User, Wallet, Camera, Save, Plus, ChevronLeft } from "lucide-react";
@@ -135,6 +136,18 @@ export default function ProfilePage() {
   }
 
   if (!isAuthenticated || !user) return null;
+
+  const isGameOwned = (gameId: string) => {
+    if (user.purchasedGames.includes(gameId)) return true;
+    return Object.entries(LEGACY_GAME_IDS).some(
+      ([oldId, newId]) =>
+        newId === gameId && user.purchasedGames.includes(oldId),
+    );
+  };
+
+  const ownedGamesCount = gamesData.filter(
+    (g) => isGameOwned(g.id) || g.price === 0,
+  ).length;
 
   return (
     <div className="min-h-screen bg-[#0f111a] text-white py-12 px-4">
@@ -364,7 +377,7 @@ export default function ProfilePage() {
                   </p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black text-white">
-                      {user.purchasedGames.length}
+                      {ownedGamesCount}
                     </span>
                     <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
                       Games Owned

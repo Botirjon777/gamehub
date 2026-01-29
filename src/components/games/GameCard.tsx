@@ -14,6 +14,7 @@ import Badge from "@/components/ui/Badge";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { purchaseGame } from "@/lib/purchase.actions";
 import { useState } from "react";
+import { LEGACY_GAME_IDS } from "@/lib/games-data";
 
 interface GameCardProps {
   game: Game;
@@ -23,7 +24,14 @@ export default function GameCard({ game }: GameCardProps) {
   const { user, setUser } = useAuthStore();
   const [isPurchasing, setIsPurchasing] = useState(false);
 
-  const isOwned = user?.purchasedGames.includes(game.id) || game.price === 0;
+  // Check ownership including legacy IDs
+  const isOwned =
+    game.price === 0 ||
+    user?.purchasedGames.includes(game.id) ||
+    Object.entries(LEGACY_GAME_IDS).some(
+      ([oldId, newId]) =>
+        newId === game.id && user?.purchasedGames.includes(oldId),
+    );
   const canPlay = isOwned && !game.comingSoon;
 
   const handlePurchase = async () => {
