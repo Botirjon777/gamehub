@@ -11,7 +11,7 @@ export const gamesData: Game[] = [
     route: "/games/snake",
     price: 0,
     comingSoon: false,
-    isNew: true,
+    isNewArrival: true,
   },
   {
     id: "tetris",
@@ -23,7 +23,7 @@ export const gamesData: Game[] = [
     route: "/games/tetris",
     price: 0,
     comingSoon: false,
-    isNew: true,
+    isNewArrival: true,
   },
   {
     id: "chess",
@@ -55,7 +55,7 @@ export const gamesData: Game[] = [
     route: "/games/mining-adventure",
     price: 29.99,
     comingSoon: false,
-    isNew: true,
+    isNewArrival: true,
   },
   {
     id: "crypto-miner",

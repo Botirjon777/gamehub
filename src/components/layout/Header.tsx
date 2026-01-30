@@ -1,9 +1,5 @@
 "use client";
 
-"use client";
-
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -25,6 +21,11 @@ export default function Header() {
         ]
       : []),
   ];
+
+  // Add cache-busting timestamp to profile image
+  const profileImageUrl = user?.profileImage
+    ? `${user.profileImage}?t=${new Date(user.updatedAt || Date.now()).getTime()}`
+    : null;
 
   return (
     <header className="glass-strong sticky top-0 z-50 backdrop-blur-xl">
@@ -68,12 +69,11 @@ export default function Header() {
                   className="flex items-center gap-3 group px-3 py-1.5 rounded-full hover:bg-white/5 transition-all"
                 >
                   <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/10 group-hover:border-primary/50 transition-colors">
-                    {user?.profileImage ? (
-                      <Image
-                        src={user.profileImage}
-                        alt={user.username}
-                        fill
-                        className="object-cover"
+                    {profileImageUrl ? (
+                      <img
+                        src={profileImageUrl}
+                        alt={user?.username}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full gradient-primary flex items-center justify-center text-xs font-bold">

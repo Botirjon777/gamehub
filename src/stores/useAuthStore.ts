@@ -125,6 +125,11 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         await logoutUser();
+        // Clear game-specific storages
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("mining-adventure-storage");
+          localStorage.removeItem("game-storage");
+        }
         set({ user: null, isAuthenticated: false, error: null });
       },
 

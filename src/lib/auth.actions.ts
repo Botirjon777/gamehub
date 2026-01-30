@@ -16,6 +16,8 @@ export interface UserDTO {
   ownedSkins: string[];
   selectedSkins: Record<string, string>;
   createdAt: string;
+  updatedAt: string;
+  role: "user" | "admin";
 }
 
 // Helper to convert Mongoose doc to DTO
@@ -34,6 +36,8 @@ export async function convertToDTO(user: IUser): Promise<UserDTO> {
         ? Object.fromEntries(user.selectedSkins)
         : user.selectedSkins || {},
     createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+    role: user.role || "user",
   };
 }
 

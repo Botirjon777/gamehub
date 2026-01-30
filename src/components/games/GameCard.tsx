@@ -57,7 +57,7 @@ export default function GameCard({ game }: GameCardProps) {
           </div>
         )}
 
-        {game.isNew && (
+        {game.isNewArrival && (
           <Badge variant="primary" pulse className="absolute top-2 left-2">
             NEW
           </Badge>

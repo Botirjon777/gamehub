@@ -7,6 +7,7 @@ import MiningGame from "@/games/mining-adventure/components/MiningGame";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { LEGACY_GAME_IDS } from "@/lib/games-data";
 
 export default function MiningAdventurePage() {
   const router = useRouter();
@@ -22,7 +23,9 @@ export default function MiningAdventurePage() {
     }
   }, [isInitialized, isAuthenticated, router]);
 
-  const isOwned = user?.purchasedGames.includes("mining");
+  const isOwned =
+    user?.purchasedGames.includes("mining-adventure") ||
+    user?.purchasedGames.includes("mining");
 
   if (!isInitialized || (isAuthenticated && !user)) {
     return (
