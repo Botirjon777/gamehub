@@ -3,8 +3,11 @@ import { Gamepad2, Trophy, BarChart3, Target } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
+import { getAllPosters } from "@/lib/admin.actions";
 
-export default function Home() {
+export default async function Home() {
+  const posters = await getAllPosters();
+
   const features = [
     {
       icon: Gamepad2,
@@ -31,43 +34,104 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-primary opacity-20 blur-3xl"></div>
-        <Container className="py-20 md:py-32 relative">
-          <div className="text-center max-w-4xl mx-auto animate-fade-in">
-            <h1 className="mb-5 animate-slide-up">
-              Welcome to <span className="gradient-text">Game</span>
-              <span style={{ color: "#f0a000" }}>Hub</span>
-            </h1>
-            <p
-              className="text-xl md:text-2xl text-muted-foreground mb-8 animate-slide-up"
-              style={{ animationDelay: "0.1s" }}
-            >
-              Your ultimate destination for classic and modern games. Play,
-              compete, and dominate the leaderboards!
-            </p>
-            <div
-              className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up"
-              style={{ animationDelay: "0.2s" }}
-            >
-              <Link href="/register">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full sm:w-auto"
-                >
-                  Get Started
-                </Button>
-              </Link>
-              <Link href="/games">
-                <Button variant="ghost" size="lg" className="w-full sm:w-auto">
-                  Browse Games
-                </Button>
-              </Link>
-            </div>
+      {/* Hero Section / Carousel */}
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden">
+        {posters.length > 0 ? (
+          <div className="absolute inset-0 z-0">
+            {posters.map((poster, index) => (
+              <div
+                key={poster._id}
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  index === 0 ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <div className="absolute inset-0 bg-black/60 z-10"></div>
+                <img
+                  src={poster.imageUrl}
+                  alt={poster.title}
+                  className="w-full h-full object-cover scale-105 animate-slow-zoom"
+                />
+                <Container className="relative z-20 h-full flex items-center">
+                  <div className="max-w-3xl animate-fade-in-up">
+                    <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight">
+                      {poster.title
+                        .split(" ")
+                        .map((word: string, i: number) => (
+                          <span
+                            key={i}
+                            className={
+                              i % 2 === 1 ? "gradient-text" : "text-white"
+                            }
+                          >
+                            {word}{" "}
+                          </span>
+                        ))}
+                    </h1>
+                    <p className="text-xl md:text-2xl text-white/60 mb-10 max-w-2xl font-medium">
+                      {poster.subtitle}
+                    </p>
+                    <div className="flex gap-4">
+                      <Link href={poster.buttonLink}>
+                        <Button
+                          variant="primary"
+                          size="lg"
+                          className="px-10 h-16 text-lg"
+                        >
+                          {poster.buttonText}
+                        </Button>
+                      </Link>
+                      <Link href="/register">
+                        <Button
+                          variant="ghost"
+                          size="lg"
+                          className="px-10 h-16 text-lg border-white/20"
+                        >
+                          Join GameHub
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Container>
+              </div>
+            ))}
           </div>
-        </Container>
+        ) : (
+          <>
+            <div className="absolute inset-0 gradient-primary opacity-20 blur-3xl"></div>
+            <Container className="py-20 md:py-32 relative">
+              <div className="text-center max-w-4xl mx-auto animate-fade-in">
+                <h1 className="mb-5 animate-slide-up text-7xl font-black">
+                  Welcome to <span className="gradient-text">Game</span>
+                  <span style={{ color: "#f0a000" }}>Hub</span>
+                </h1>
+                <p className="text-2xl text-muted-foreground mb-12 animate-slide-up">
+                  Your ultimate destination for classic and modern games. Play,
+                  compete, and dominate the leaderboards!
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up">
+                  <Link href="/register">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="px-10 h-16 text-lg"
+                    >
+                      Get Started
+                    </Button>
+                  </Link>
+                  <Link href="/games">
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      className="px-10 h-16 text-lg"
+                    >
+                      Browse Games
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </Container>
+          </>
+        )}
       </section>
 
       {/* Features Section */}

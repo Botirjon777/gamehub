@@ -18,7 +18,7 @@ export interface Game {
   route: string;
   price: number;
   comingSoon?: boolean;
-  isNew?: boolean;
+  isNewArrival?: boolean;
 }
 
 export interface GameSession {

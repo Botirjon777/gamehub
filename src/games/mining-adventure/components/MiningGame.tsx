@@ -10,6 +10,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import { Pickaxe, TrendingUp, Wallet, Clock } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 const MiningGame: React.FC = () => {
   const { user, setUser } = useAuthStore();
@@ -64,12 +65,13 @@ const MiningGame: React.FC = () => {
 
   // Load from server on mount
   useEffect(() => {
+    if (!user) return;
     const init = async () => {
-      await loadFromServer();
+      await loadFromServer(user.id);
       collectIncome(); // Immediate catch up after DB load
     };
     init();
-  }, [loadFromServer, collectIncome]);
+  }, [loadFromServer, collectIncome, user?.id]);
 
   // Combined Boost & Cooldown timer
   useEffect(() => {
@@ -108,19 +110,20 @@ const MiningGame: React.FC = () => {
 
   // Sync income every 5 seconds and push to server every 15 seconds
   useEffect(() => {
+    if (!user) return;
     const incomeTimer = setInterval(() => {
       collectIncome();
     }, 5000);
 
     const syncTimer = setInterval(() => {
-      syncToServer();
+      syncToServer(user.id);
     }, 15000);
 
     return () => {
       clearInterval(incomeTimer);
       clearInterval(syncTimer);
     };
-  }, [collectIncome, syncToServer]);
+  }, [collectIncome, syncToServer, user?.id]);
 
   const incomePerMinute = getIncomePerMinute();
   const isBoostActive = timeLeft > 0;
@@ -148,8 +151,11 @@ const MiningGame: React.FC = () => {
             <p className="text-white/40 text-sm font-medium uppercase tracking-wider">
               Balance
             </p>
-            <p className="text-3xl font-black text-white">
-              ${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            <p
+              className="text-2xl sm:text-3xl font-black text-white truncate max-w-[150px] sm:max-w-none"
+              title={balance.toString()}
+            >
+              {formatCurrency(balance, balance > 999999)}
             </p>
           </div>
         </div>
@@ -163,9 +169,14 @@ const MiningGame: React.FC = () => {
               Income
             </p>
             <p
-              className={`text-3xl font-black ${isBoostActive ? "text-primary animate-pulse" : "text-green-400"}`}
+              className={`text-2xl sm:text-3xl font-black ${isBoostActive ? "text-primary animate-pulse" : "text-green-400"} truncate max-w-[150px] sm:max-w-none`}
+              title={(incomePerMinute * (isBoostActive ? 5 : 1)).toString()}
             >
-              +${(incomePerMinute * (isBoostActive ? 5 : 1)).toLocaleString()}
+              +
+              {formatCurrency(
+                incomePerMinute * (isBoostActive ? 5 : 1),
+                incomePerMinute > 99999,
+              )}
               /min
             </p>
             {activeMultiplier > 1 && (
@@ -285,7 +296,7 @@ const MiningGame: React.FC = () => {
                 key={dino.id}
                 config={dino}
                 count={count}
-                onBuy={() => buyDino(dino.id)}
+                onBuy={() => user && buyDino(dino.id, user.id)}
                 canAfford={canAfford}
                 selectedSkinId={activeSkinId}
               />

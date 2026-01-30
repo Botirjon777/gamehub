@@ -29,3 +29,19 @@ export function formatDuration(seconds: number): string {
 export function formatScore(score: number): string {
   return new Intl.NumberFormat("en-US").format(score);
 }
+
+export function formatCurrency(amount: number, compact = false): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: compact ? "compact" : "standard",
+    maximumFractionDigits: compact ? 1 : 2,
+  }).format(amount);
+}
+
+export function formatCompactNumber(number: number): string {
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(number);
+}

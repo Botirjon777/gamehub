@@ -10,14 +10,15 @@ interface MiningState {
   isLoading: boolean;
   boostEndTime: number | null;
   lastBoostTime: number | null;
-  globalMultiplier: number; // Set from external user state
+  globalMultiplier: number;
+  userId: string | null;
   activateBoost: () => boolean;
-  buyDino: (type: DinosaurType) => boolean;
+  buyDino: (type: DinosaurType, currentUserId: string) => boolean;
   setGlobalMultiplier: (multiplier: number) => void;
   collectIncome: () => void;
   getIncomePerMinute: () => number;
-  syncToServer: () => Promise<void>;
-  loadFromServer: () => Promise<void>;
+  syncToServer: (currentUserId: string) => Promise<void>;
+  loadFromServer: (currentUserId: string) => Promise<void>;
   resetGame: () => void;
 }
 
@@ -31,6 +32,7 @@ export const useMiningStore = create<MiningState>()(
       boostEndTime: null,
       lastBoostTime: null,
       globalMultiplier: 1,
+      userId: null,
 
       activateBoost: () => {
         const now = Date.now();
@@ -56,7 +58,7 @@ export const useMiningStore = create<MiningState>()(
         }, 0);
       },
 
-      buyDino: (type: DinosaurType) => {
+      buyDino: (type: DinosaurType, currentUserId: string) => {
         const config = DINOSAURS.find((d) => d.id === type);
         if (!config || get().balance < config.cost) return false;
 
@@ -72,14 +74,18 @@ export const useMiningStore = create<MiningState>()(
           ],
         }));
 
-        // Sync to server immediately after purchase
-        get().syncToServer();
+        if (currentUserId) {
+          // Sync to server immediately after purchase if we have a userId
+          get().syncToServer(currentUserId);
+        }
         return true;
       },
 
-      syncToServer: async () => {
+      syncToServer: async (currentUserId: string) => {
         const { balance, ownedDinosaurs, lastUpdate, lastBoostTime } = get();
         try {
+          // Update internal userId before syncing
+          set({ userId: currentUserId });
           const res = await fetch("/api/mining/progress", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -103,9 +109,17 @@ export const useMiningStore = create<MiningState>()(
         }
       },
 
-      loadFromServer: async () => {
+      loadFromServer: async (currentUserId: string) => {
         set({ isLoading: true });
         try {
+          // Check if local storage belongs to another user
+          const state = get();
+          if (state.userId && state.userId !== currentUserId) {
+            console.log("Local state belongs to different user, resetting...");
+            get().resetGame();
+            set({ userId: currentUserId });
+          }
+
           const res = await fetch("/api/mining/progress");
           if (!res.ok) {
             const data = await res.json();
@@ -136,11 +150,18 @@ export const useMiningStore = create<MiningState>()(
               console.log(
                 "Local progress is newer than server, syncing local data...",
               );
-              get().syncToServer();
+              get().syncToServer(currentUserId);
             }
           } else {
             console.log("No progress found in database, syncing local data...");
-            get().syncToServer();
+            // Before syncing fresh local data, ensure it belongs to this user
+            if (!get().userId || get().userId === currentUserId) {
+              get().syncToServer(currentUserId);
+            } else {
+              console.log("Local data mismatch, skipping sync.");
+              get().resetGame();
+              get().syncToServer(currentUserId);
+            }
           }
         } catch (e) {
           console.error("Failed to load mining progress:", e);

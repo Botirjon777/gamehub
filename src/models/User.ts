@@ -12,6 +12,7 @@ export interface IUser extends Document {
   selectedSkins: Record<string, string>; // gameId -> skinId
   createdAt: Date;
   updatedAt: Date;
+  role: "user" | "admin";
 }
 
 const UserSchema = new Schema<IUser>(
@@ -25,6 +26,7 @@ const UserSchema = new Schema<IUser>(
     phoneNumber: { type: String, default: "" },
     ownedSkins: { type: [String], default: ["default"] },
     selectedSkins: { type: Map, of: String, default: {} },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
   },
   { timestamps: true },
 );
